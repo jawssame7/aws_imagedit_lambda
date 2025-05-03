@@ -1,0 +1,117 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-app
+
+  Sample SAM Template for sam-app using ECR
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 30 # Timeout might need adjustment for container startup
+    Tracing: Active
+    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
+    LoggingConfig:
+      LogFormat: JSON
+    Environment:
+      Variables:
+        BUCKET_NAME: !Ref BucketName
+        MY_AWS_REGION: ap-northeast-1
+  Api:
+    TracingEnabled: true
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: Name of the S3 bucket to access
+    Default: testbucket-devsame73
+
+  Env:
+    Type: String
+    Description: Environment (dev, test, prod)
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - prod
+
+  MemorySize:
+    Type: Number
+    Description: Lambda function memory size
+    Default: 512
+
+  EnableDetailedMonitoring:
+    Type: String
+    Description: Enable detailed monitoring
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+  ApiStageName:
+    Type: String
+    Description: API Gateway stage name
+    Default: Prod
+
+Conditions:
+  IsProd: !Equals [!Ref Env, 'prod']
+  IsTest: !Equals [!Ref Env, 'test']
+  IsDev: !Equals [!Ref Env, 'dev']
+  IsDetailedMonitoring: !Equals [!Ref EnableDetailedMonitoring, 'true']
+
+Resources:
+  ImageProcessingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      MemorySize: !Ref MemorySize
+      Architectures:
+        - x86_64 # Or arm64 if preferred and base image supports it
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref BucketName
+          MY_AWS_REGION: ap-northeast-1
+          ENVIRONMENT: !Ref Env
+      Policies: # Keep necessary policies
+        - S3ReadPolicy:
+            BucketName: !Ref BucketName
+        - S3WritePolicy:
+            BucketName: !Ref BucketName
+      Events: # Keep API Gateway event configuration
+        ImageProcessing:
+          Type: Api
+          Properties:
+            Path: /image-processing
+            Method: post
+            RestApiId: !Ref MyApiGateway
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Ref: ApplicationResourceGroup
+      AutoConfigurationEnabled: 'true'
+  MyApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref ApiStageName
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  ImageProcessingApi:
+    Description: API Gateway endpoint URL for stage
+    Value: !Sub 'https://${MyApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${ApiStageName}/image-processing/'
+  ImageProcessingFunction:
+    Description: Image Processing Lambda Function ARN
+    Value: !GetAtt ImageProcessingFunction.Arn
+  ImageProcessingFunctionIamRole:
+    Description: Implicit IAM Role created for Image Processing function
+    Value: !GetAtt ImageProcessingFunctionRole.Arn

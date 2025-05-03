@@ -1,0 +1,24 @@
+{
+  "name": "image-processing",
+  "version": "1.0.0",
+  "description": "画像処理Lambda関数 - 証明書に文字と印鑑を合成",
+  "main": "app.js",
+  "author": "SAM CLI (Modified)",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.800.0",
+    "@aws-sdk/s3-request-presigner": "^3.800.0",
+    "sharp": "^0.33.2",
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "mocha tests/unit/"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.149",
+    "@types/node": "^22.0.0",
+    "chai": "^4.3.6",
+    "mocha": "^10.2.0"
+  }
+}

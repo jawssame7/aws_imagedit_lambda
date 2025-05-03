@@ -1,0 +1,42 @@
+{
+  "body": "",
+  "resource": "/{proxy+}",
+  "path": "/path/to/resource",
+  "httpMethod": "GET",
+  "queryStringParameters": null,
+  "pathParameters": null,
+  "stageVariables": null,
+  "headers": {
+    "Accept": "*/*",
+    "Host": "example.com"
+  },
+  "requestContext": {
+    "resourceId": "123456",
+    "resourcePath": "/{proxy+}",
+    "httpMethod": "GET",
+    "extendedRequestId": null,
+    "requestTime": "09/Apr/2015:12:34:56 +0000",
+    "path": "/prod/path/to/resource",
+    "accountId": "123456789012",
+    "protocol": "HTTP/1.1",
+    "stage": "prod",
+    "requestTimeEpoch": 1428582896000,
+    "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
+    "identity": {
+      "cognitoIdentityPoolId": null,
+      "accountId": null,
+      "cognitoIdentityId": null,
+      "caller": null,
+      "apiKey": null,
+      "sourceIp": "127.0.0.1",
+      "accessKey": null,
+      "cognitoAuthenticationType": null,
+      "cognitoAuthenticationProvider": null,
+      "userArn": null,
+      "userAgent": "Custom User Agent String",
+      "user": null
+    },
+    "domainName": "example.com",
+    "apiId": "1234567890"
+  }
+}

@@ -1,0 +1,32 @@
+version = 0.1
+
+# デフォルト設定（共通設定）
+[default.deploy.parameters]
+resolve_s3 = true
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+region = "ap-northeast-1"
+
+# 開発環境の設定
+[dev.deploy.parameters]
+stack_name = "sam-app-dev"
+s3_prefix = "sam-app-dev"
+disable_rollback = true
+parameter_overrides = "BucketName=\"testbucket-devsame73-dev\" Env=\"dev\" MemorySize=\"256\" ApiStageName=\"dev\" EnableDetailedMonitoring=\"false\""
+image_repositories = ["ImageProcessingFunction=703671935472.dkr.ecr.ap-northeast-1.amazonaws.com/samapp-dev/imageprocessingfunction"]
+
+# テスト環境の設定
+[test.deploy.parameters]
+stack_name = "sam-app-test"
+s3_prefix = "sam-app-test"
+disable_rollback = true
+parameter_overrides = "BucketName=\"testbucket-devsame73-test\" Env=\"test\" MemorySize=\"512\" ApiStageName=\"test\" EnableDetailedMonitoring=\"true\""
+image_repositories = ["ImageProcessingFunction=703671935472.dkr.ecr.ap-northeast-1.amazonaws.com/samapp-test/imageprocessingfunction"]
+
+# 本番環境の設定
+[prod.deploy.parameters]
+stack_name = "sam-app-prod"
+s3_prefix = "sam-app-prod"
+disable_rollback = false  # 本番ではロールバックを有効化
+parameter_overrides = "BucketName=\"testbucket-devsame73-prod\" Env=\"prod\" MemorySize=\"1024\" ApiStageName=\"prod\" EnableDetailedMonitoring=\"true\""
+image_repositories = ["ImageProcessingFunction=703671935472.dkr.ecr.ap-northeast-1.amazonaws.com/samapp-prod/imageprocessingfunction"]
