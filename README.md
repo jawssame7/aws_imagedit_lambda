@@ -2,7 +2,7 @@
 
 ## プロジェクト概要
 
-このプロジェクトは、AWS Lambda と AWS SAM を使用して証明書画像に文字や印鑑を合成する画像処理サービスです。S3 バケットに保存されているベース画像に対して、テキスト情報と印鑑画像を配置し、合成した画像を S3 に保存します。生成された画像は署名付き URL を通じてダウンロード可能です。
+このプロジェクトは、AWS Lambda と AWS SAM を使用して証明書画像に文字や印鑑を合成する画像処理サービスです。S3 バケットに保存されているベース画像に対して、テキスト情報と印鑑画像を配置し、合成した画像を S3 に保存します。生成された画像は署名付き URL を通じてダウンロード可能です。CDK を用いたインフラストラクチャのデプロイにも対応しています。
 
 ## 機能概要
 
@@ -10,7 +10,7 @@
 - 印鑑画像を合成
 - 処理済み画像を S3 バケットに保存
 - 処理済み画像の S3 署名付き URL を返却
-- AWS SAM を使用した簡単なデプロイ
+- AWS SAM または CDK を使用した簡単なデプロイ
 
 ## 技術スタック
 
@@ -18,6 +18,7 @@
 - Amazon S3
 - API Gateway
 - AWS SAM (Serverless Application Model)
+- AWS CDK (Cloud Development Kit)
 - Node.js 20
 - TypeScript
 - Sharp ライブラリ（画像処理）
@@ -31,21 +32,23 @@ aws_imagedit_lambda/
 │   ├── image-processing/       # Lambda 関数ソースコード
 │   │   ├── app.ts              # メイン処理コード
 │   │   ├── package.json        # 依存関係定義
-│   │   ├── tsconfig.json       # TypeScript 設定
 │   │   ├── Dockerfile          # コンテナイメージ定義
 │   │   └── fonts/              # フォントディレクトリ
 │   │       └── NotoSansJP-Regular.otf  # 日本語フォント
 │   ├── template.yaml           # SAM テンプレート（インフラ定義）
-│   ├── samconfig.toml          # SAM デプロイ設定
-│   └── events/                 # テスト用イベント
-├── infra/                      # インフラストラクチャコード（オプション）
-└── lambda-layer-fonts.zip      # フォントレイヤー用 ZIP ファイル
+│   └── samconfig.toml          # SAM デプロイ設定
+├── infra/                      # CDK インフラストラクチャコード
+│   ├── bin/                    # CDKアプリのエントリーポイント
+│   ├── lib/                    # CDKスタック定義
+│   ├── constructs/             # カスタムコンストラクト
+│   └── config/                 # 環境設定
+└── README.md                   # このドキュメント
 ```
 
 ## 前提条件
 
 - AWS CLI のインストールと設定
-- AWS SAM CLI のインストール
+- AWS SAM CLI または AWS CDK CLI のインストール
 - Node.js 20 以上
 - Docker のインストール
 - AWS アカウントと適切な権限
@@ -86,7 +89,7 @@ cd sam-app
 sam build
 
 # ローカルでの Lambda 関数実行
-sam local invoke ImageProcessingFunction --event events/event.json --env-vars env.json
+sam local invoke ImageProcessingFunction --event events/event.json
 
 # または API のローカル起動
 sam local start-api
@@ -97,10 +100,10 @@ curl http://localhost:3000/image-processing
 
 ローカル実行時に以下の問題が発生する可能性があります：
 
-1. **フォント関連の問題**： フォントファイルへのパス解決が必要です。
+1. **S3 バケットへのアクセス**： ローカルテスト時は適切な AWS 認証情報が必要です。
 
    ```bash
-   sam local invoke ImageProcessingFunction -v ./image-processing/fonts:/var/task/fonts
+   export AWS_PROFILE=your-profile
    ```
 
 2. **環境変数設定**： `env.json` に必要な環境変数を設定します。
@@ -113,12 +116,9 @@ curl http://localhost:3000/image-processing
    }
    ```
 
-3. **AWS 認証情報**： ローカルから S3 バケットにアクセスするには適切な AWS 認証情報が必要です。
-   ```bash
-   export AWS_PROFILE=your-profile
-   ```
-
 ### AWS へのデプロイ
+
+#### SAM を使用したデプロイ
 
 1. AWS SAM を使用したビルド
 
@@ -133,17 +133,19 @@ sam build
 sam deploy --guided
 ```
 
-3. 環境別のデプロイ（開発/テスト/本番）
+#### CDK を使用したデプロイ
+
+1. 環境変数の設定
+
+`.env` ファイルを `infra` ディレクトリに作成し、必要な環境変数を設定します。
+
+2. CDK を使用したデプロイ
 
 ```bash
-# 開発環境へのデプロイ
-sam deploy --config-env dev
-
-# テスト環境へのデプロイ
-sam deploy --config-env test
-
-# 本番環境へのデプロイ
-sam deploy --config-env prod
+cd infra
+npm install
+npx cdk bootstrap  # 初回のみ
+npx cdk deploy
 ```
 
 ## 使用方法
@@ -190,24 +192,37 @@ const getInsertImageCommand = new GetObjectCommand({
 
 ### 3. AWS リソースのカスタマイズ
 
-`template.yaml` を編集して、Lambda 関数のメモリサイズやタイムアウト、API Gateway の設定などをカスタマイズできます。
+`template.yaml`（SAM）または `infra/lib/infra-stack.ts`（CDK）を編集して、Lambda 関数のメモリサイズやタイムアウト、API Gateway の設定などをカスタマイズできます。
+
+## フォント設定
+
+このプロジェクトでは、以下の方法でフォントを管理しています：
+
+1. **コンテナイメージ内にフォントを含める**：
+
+   - `Dockerfile` 内で日本語フォント（Noto Sans JP）をコンテナにコピー
+   - フォントキャッシュを更新（`fc-cache -fv`）することでシステムがフォントを認識
+
+2. **フォントパス**：
+   - フォントファイルは `fonts/` ディレクトリに格納
+   - `app.ts` 内で相対パス `./fonts/NotoSansJP-Regular.otf` を使用してフォントを読み込み
 
 ## トラブルシューティング
 
-1. **TypeScript のコンパイルエラー**：
+1. **テキストが表示されない問題**：
+
+   - フォントファイルが正しくコンテナイメージに含まれているか確認
+   - CloudWatch Logs でフォント読み込みエラーを確認
+
+2. **TypeScript のコンパイルエラー**：
 
    - `tsconfig.json` の設定を確認
    - 最新の TypeScript バージョンを使用しているか確認
 
-2. **Lambda 関数の実行エラー**：
+3. **Lambda 関数の実行エラー**：
 
    - CloudWatch Logs でエラー内容を確認
    - `BUCKET_NAME` などの環境変数が正しく設定されているか確認
-
-3. **フォント表示の問題**：
-
-   - フォントファイルが正しくパッケージングされているか確認
-   - Lambda レイヤーを使用している場合はレイヤーが正しく設定されているか確認
 
 4. **画像処理の遅延**：
    - Lambda 関数のメモリサイズを増やすことで処理速度を改善（`template.yaml` の `MemorySize` パラメータ）
@@ -216,4 +231,5 @@ const getInsertImageCommand = new GetObjectCommand({
 
 - [AWS Lambda ドキュメント](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)
 - [AWS SAM ドキュメント](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html)
+- [AWS CDK ドキュメント](https://docs.aws.amazon.com/cdk/latest/guide/home.html)
 - [Sharp ライブラリのドキュメント](https://sharp.pixelplumbing.com/)
