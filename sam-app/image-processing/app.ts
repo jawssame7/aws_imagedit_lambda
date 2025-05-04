@@ -145,14 +145,14 @@ export const lambdaHandler = async (
 
   try {
     // フォントファイルの存在確認
-    const fontDir = '/opt/fonts';
-    if (fs.existsSync(fontDir)) {
-      console.log('fontsディレクトリの中身:', fs.readdirSync(fontDir));
-    } else {
-      console.log('fontsディレクトリが存在しません:', fontDir);
-    }
+    // const fontDir = '/opt/fonts';
+    // if (fs.existsSync(fontDir)) {
+    //   console.log('fontsディレクトリの中身:', fs.readdirSync(fontDir));
+    // } else {
+    //   console.log('fontsディレクトリが存在しません:', fontDir);
+    // }
 
-    console.log('Environment variables:', process.env);
+    // console.log('Environment variables:', process.env);
 
     // S3バケット設定
     const baseDir = 'base_image';
