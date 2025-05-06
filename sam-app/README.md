@@ -270,57 +270,22 @@ const fileName = 'card.png';
 
 ### ECR リポジトリエラー
 
-以下のようなエラーが発生した場合：
+`sam deploy` 実行時に以下のようなエラーが発生した場合：
 
 ```
 Error: Unable to upload artifact imageprocessingfunction:nodejs20-v1 referenced by ImageUri parameter of ImageProcessingFunction resource.
 error from registry: The repository with name 'samapp-dev/imageprocessingfunction' does not exist in the registry with id '703671935472'
 ```
 
-これは ECR リポジトリが存在しないために発生するエラーです。以下の方法で解決できます：
+これは、SAM が Docker イメージをプッシュしようとした際に、指定された ECR リポジトリが存在しないために発生します。
 
-1. **ECR リポジトリを手動で作成する**:
+以下のコマンドを実行して、ECR リポジトリを手動で作成してください（リージョンは適宜変更してください）:
 
-   ```bash
-   aws ecr create-repository --repository-name samapp-dev/imageprocessingfunction --region ap-northeast-1
-   ```
+```bash
+aws ecr create-repository --repository-name samapp-dev/imageprocessingfunction --region ap-northeast-1
+```
 
-   リポジトリがすでに存在する場合は、以下のエラーが表示されます：
-
-   ```
-   An error occurred (RepositoryAlreadyExistsException) when calling the CreateRepository operation: The repository with name 'samapp-dev/imageprocessingfunction' already exists in the registry with id '703671935472'
-   ```
-
-   この場合は、既存のリポジトリを使用するために samconfig.toml ファイルを確認し、正しいリポジトリ URI が設定されているか確認してください。
-
-2. **または、samconfig.toml を修正する**:
-   `samconfig.toml`ファイルから該当する環境の`image_repositories`行を削除または一時的にコメントアウトします：
-
-   ```toml
-   [dev.deploy.parameters]
-   # 他の設定...
-   # image_repositories = ["ImageProcessingFunction=703671935472.dkr.ecr.ap-northeast-1.amazonaws.com/samapp-dev/imageprocessingfunction"]
-   ```
-
-3. **初回ガイド付きデプロイを実行する**:
-
-   ```bash
-   sam deploy --config-env dev --guided
-   ```
-
-   デプロイガイド中に、イメージリポジトリを自動作成するオプションを選択します。これにより、必要な ECR リポジトリが自動的に作成されます。
-
-4. **デプロイ後、samconfig.toml を更新する**:
-   デプロイ成功後に生成された`samconfig.toml`の内容を確認し、必要に応じて環境ごとの設定を調整します。
-
-5. **既存のリポジトリを確認する**:
-   リポジトリが既に存在する場合は、以下のコマンドで現在のリポジトリ一覧を確認できます：
-
-   ```bash
-   aws ecr describe-repositories --region ap-northeast-1
-   ```
-
-   samconfig.toml の`image_repositories`パラメータが、実際に存在するリポジトリ URI と一致していることを確認してください。
+リポジトリを作成後、再度 `sam deploy` コマンドを実行してください。
 
 ### IAM ケーパビリティエラー
 

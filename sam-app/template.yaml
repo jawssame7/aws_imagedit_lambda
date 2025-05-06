@@ -84,6 +84,10 @@ Resources:
             Path: /image-processing
             Method: post
             RestApiId: !Ref MyApiGateway
+    Metadata: # <--- このセクションを追加
+      DockerTag: nodejs20-v1 # 任意のタグ名 (例)
+      Dockerfile: Dockerfile # Dockerfile名
+      DockerContext: ./image-processing # Dockerfileがあるディレクトリへのパス (template.yamlからの相対パス)
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
     Properties:
@@ -101,6 +105,16 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: !Ref ApiStageName
+      Cors: # <-- APIレベルの CORS 設定を再度追加 (シンプルな形式)
+        AllowMethods: "'POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      BinaryMediaTypes:
+        - image/png
+        - image/jpeg
+        - image/gif
+        - image/webp
+        - application/octet-stream
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
