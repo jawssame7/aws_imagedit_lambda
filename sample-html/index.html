@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>トップページ</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>ようこそ</h1>
+    </header>
+    <main>
+        <form id="dataForm">
+            <div class="form-group">
+                <label for="userInput">メッセージを入力してください：</label>
+                <input type="text" id="userInput" name="userInput" required>
+            </div>
+            <button type="submit" id="submitButton">送信</button>
+        </form>
+        <div id="responseMessage"></div>
+        <div id="resultImageContainer">
+            <img id="resultImage" alt="処理結果の画像" style="max-width: 100%; border: 1px solid #ccc;">
+        </div>
+    </main>
+    <script src="javascript/script.js"></script>
+</body>
+</html>
